@@ -1,0 +1,164 @@
+  http://arduino-esp8266.readthedocs.io/en/latest/exception_causes.html
+
+in- przychodzi z serwera (nodeMCU)
+out - wysyłane na serwer (nodeMCU)
+//// IA JSON web service
+ok in/out // setNTP  {"NTP":   {host:adr, offset:h}} ustawia parametry zegara NTP
+ok in/out // setTime {"Time":  {dzien:x, czas:str}} ustawia parametry zegara
+ok setTimeM {"CZAS": millis} ustawia parametry zegara w UTC
+ok in/out // setWifi {"Wifi":  {ssid:s;pass:p;ip:ip;tryb:"AP/STA"}} add/del/publish ssid passwd
+ok in/out // setMQTT {"Mqtt":  {host:adr, port:port, user:login, pwd:passwd}} ustawienia mqtt
+ok in/out // setLBL  {"LBL":   {id:i, lbl:nazwa}} zmiana nazwy/etykiety sekcji
+ok in/__ // {"MQTTstat":"ok/err", 
+           "GEO":"a123",
+           "TEMP":124.4,
+           "CZAS":123, 
+           "CISN":333,
+           "DESZCZ":0,
+           "SEKCJE":3,
+           "INIT_PROGS":x       //info ze bedzie przesylac komplet programow
+           "SYSTIME":timestr // od restartu
+           } odbiera status 
+ok __/out // GET {"GET:"SLBL/PROG,KONF,STAT"} - pytanie o wartosc na serwerze
+ok in/out // {"SEKCJA/d":0/1} ustawienie sekcji
+ok in/out // {"TRYB":a/m} ustawienie trybu
+  in/out  // {"PROG":{id:x, dt="miliis", "okresS":s, "sekcja": n, "coIle":z, "aktywny":b }}
+_/out     // {"DEL_PROG":i} //usuwa  ity program
+///
+
+{"LBL":[
+                {"id":0,"lbl":"Sekcja 0"},
+                {"id":1,"lbl":"Sekcja nowa"},
+                {"id":2,"lbl":"Sekcja 2"},
+                {"id":3,"lbl":"Sekcja 3"},
+                {"id":4,"lbl":"Sekcja 4"},
+                {"id":5,"lbl":"Sekcja 5"},
+                {"id":6,"lbl":"Sekcja 6"},
+                {"id":7,"lbl":"Sekcja 7"}
+        ]
+}
+
+
+///// MQTT 
+nodeMCUid="Podlewacz";
+outTopic="Podlewacz/OUT";
+inTopic="Podlewacz/IN";
+debugTopic="DebugTopic/Podlewacz";
+ 
+// ---------
+
+OUT
+topic:  %inTopic%/watchdog       msg: millis -- wysyłka info o watchdog
+       %outTopic%/SEKCJA/1/      msg: 0/1  -- publikacja zmiany stanu sekcji
+       %outTopic%/INFO/         msg: {json ze statusem}
+todo...        
+       %outTopic%/NTP          msg:{host:adr, offset:h} publikuje parametry zegara NTP        
+       %outTopic%/Time        msg:{dzien:x;czas:str} publikuje parametry zegara
+       %outTopic%/Wifi        msg:{typ:a/d/p, ssid:s;pass:p} add/del/publish ssid passwd
+       %outTopic%/MQTT        msg:{host:adr, p:port, l:login, h:passwd} publikuje ustawienia mqtt
+       %outTopic%/Sek         msg:{id:i, n:nazwa} publikuje nazwy/etykiety sekcji
+       %outTopic%/WifiMode    msg:{typ:"STA"/"AP", ssid:s;pass:p} publikuje zmiane trybu WIFI, dla AP, ssid i pass
+       %outTopic%/INF            msg:{"MQTTstat":"ok/err", "GEO":"a123","TEMP":124.4,"TRYB":a/m,"CZAS":123,"CISN":333,"DESZCZ":0,"SEKCJE":3} publikacja stanu systemu i jego czujnikow
+IN
+topic: %inTopic%/watchdog        msg: millis -- informacja od watchdog
+
+topic: rozkaz                    msg: wartosc
+
+topic:  %inTopic%/SEKCJA/1       msg: 0/1   -- zmiana stanu sekcji 
+        %inTopic%/TRYB           msg: a/m   -- zmiana trybu
+
+todo...
+        %inTopic%/setNTP         msg:{host:adr, offset:h} ustawia parametry zegara NTP        
+        %inTopic%/setTime        msg:{dzien:x;czas:str} ustawia parametry zegara
+        %inTopic%/setWifi        msg:{typ:a/d/p, ssid:s;pass:p} add/del/publish ssid passwd
+        %inTopic%/setMQTT        msg:{host:adr, p:port, l:login, h:passwd} ustawienia mqtt
+        %inTopic%/setSek         msg:{id:i, n:nazwa} zmiana nazwy/etykiety sekcji
+        %inTopic%/setWifiMode    msg:{typ:"STA"/"AP", ssid:s;pass:p} zmiana trybu WIFI, dla AP, ssid i pass
+        
+
+
+
+
+
+
+  Przypadki testowe
+  
+1) Zmiana trybu auto/maual    WS=       ; MQTT=
+  1.1)TRYB MANUAL
+    1.1.1) Włącz              WS=       ; MQTT=
+    1.1.2) Wyącz              WS=       ; MQTT=
+    1.1.3) Włącz kilka        WS=       ; MQTT=
+    1.1.4) Wyłącz kilka       WS=       ; MQTT=
+    1.1.1) Zmiana na tryb auto   WS=       ; MQTT=
+    1.1.1) Przełączanie ekranów    WS=       ; MQTT=
+  1.2) TRYB auto
+    1.2.1) Włączenie programu zgodnie z czasem
+    1.2.2) Wyłączenie programu zgodnie z czasem
+
+  1.3) Po restarcie zachowanie trybu     WS=       ; MQTT=
+2) Podgląd daty
+  2.1) NTP 
+  2.2) po restarcie jesli nie ma NTP to tryb MANUAL
+  2.3) tryb ręcznej daty na index.html
+  
+3)-- Temperatura odczyt
+4)-- Cisnienie odczyt
+5) -- lokalizacja 
+6) -- openweather
+7) prezentacja połączenia WS
+  7.1) Po inicie
+  7.2) Po błędzie
+  7.3) Po DC
+  7.4) Autoreconnect WS
+7) prezentacja połączenia MQTT
+  7.1) Po inicie
+  7.2) Po błędzie
+  7.3) Po DC
+  7.4) Autoreconnect MQTT
+8) Ustawienia parametrów
+  8.1) WIFI
+    8.1.1) STA
+     8.1.1.1) zmiana ssid
+     8.1.1.2) zmiana hasla
+     8.1.1.3) zmiana obu
+     8.1.1.4) zmiana brak hasła
+    8.1.2) AP
+     8.1.2.1) zmiana ssid
+     8.1.2.2) zmiana hasla
+     8.1.2.3) zmiana obu
+     8.1.2.4) zmiana brak hasła
+    8.1.3) Brak zasięgu zapisanej sieci STA
+    8.1.4) przycisk zmiany AP/STA
+    8.1.5) zmiana AP/STA z WS
+    8.1.6) zmiana AP/STA z MQTT
+    8.1.7) Zapis/odczyt ustawien WIFI.json
+    8.1.8) Prezentacja publikacja nowych ustawien WIFI WS
+    8.1.9) Prezentacja publikacja nowych ustawien WIFI MQTT
+  8.2) MQTT
+    8.2.1) Zmiana hosta
+    8.2.2) Zmiana portu
+    8.2.3) Zmiana usera
+    8.2.4) Zmiana hasła
+    8.2.5) brak usera i brak hasła
+    8.2.6) brak hasła
+    8.2.7) Zapis/odczyt ustawien MQTT.json
+    8.2.8) Prezentacja publikacja nowych ustawien MQTT WS
+    8.2.9) Prezentacja publikacja nowych ustawien MQTT MQTT
+  8.3) NTP
+   8.3.1) ustawienie serwera NTP
+   8.3.2) zmiana offsetu
+   8.3.3) zapis NTP.JSON
+   8.3.4) odczyt NTP.JSON
+   8.3.5) Ręczna data
+   8.3.6) Prezentacja publikacja nowych ustawien Daty/NTP WS
+   8.3.7) Prezentacja publikacja nowych ustawien Daty/NTP MQTT
+  8.4) PROGRAMY
+   8.4.1) Dodanie nowego programu
+   8.4.2) Usunięcie programu
+   8.4.3) Aktywacja/dezaktywacja programu
+   8.4.4) Publikacja zmian na WS
+   8.4.5) Publikacja zmian na MQTT
+  8.5) Labelki sekcji
+   8.5.1) Prezentacja na index.html
+   8.5.2) Prezentacja na p.html
+   

@@ -1,0 +1,55 @@
+{
+    "env": {
+        "myDefaultIncludePath": [
+            "${workspaceFolder}",
+            "${workspaceFolder}/include"
+        ],
+        "myCompilerPath": [
+            "C:\\Program Files (x86)\\Arduino\\libraries",
+            "C:\\Users\\kzagawa\\AppData\\Local\\Arduino15"
+        ],
+        "myArduinoDocPath": "C:\\Users\\kzagawa\\Documents\\Arduino\\libraries",
+        "myProjPath": "C:\\MojeRzeczy\\Reku\\Podlewacz"
+    },
+    "configurations": [
+        {
+            "name": "Win32",
+            "includePath": [
+                "C:\\Users\\kzagawa\\AppData\\Local\\Arduino15\\packages\\esp8266\\hardware\\esp8266\\2.4.1\\cores\\esp8266",
+                "${workspaceFolder}",
+                "${myCompilerPath}",
+                "${myArduinoDocPath}",
+                "${myProjPath}",
+                "C:/MojeRzeczy/Reku/Podlewacz/",
+                "C:/Program Files/Windows Kits/8.1/Include/um",
+                "C:/Program Files/Windows Kits/8.1/Include/shared",
+                "C:/Program Files/Windows Kits/8.1/Include/winrt",
+                "C:/Users/kzagawa/AppData/Local/Arduino15/packages/esp8266/hardware/esp8266/2.4.1/libraries/ESP8266WiFi/src"
+            ],
+            "defines": [
+                "_DEBUG",
+                "UNICODE",
+                "_UNICODE"
+            ],
+            "intelliSenseMode": "msvc-x64",
+            "browse": {
+                "path": [
+                    "C:\\Users\\kzagawa\\AppData\\Local\\Arduino15\\packages\\esp8266\\hardware\\esp8266\\2.4.1\\cores\\esp8266",
+                    "${workspaceFolder}",
+                    "${myCompilerPath}",
+                    "${myArduinoDocPath}",
+                    "${myProjPath}",
+                    "C:/Users/kzagawa/Documents/Arduino/libraries/",
+                    "C:/Program Files/Windows Kits/8.1/Include/um",
+                    "C:/Program Files/Windows Kits/8.1/Include/shared",
+                    "C:/Program Files/Windows Kits/8.1/Include/winrt"
+                ],
+                "limitSymbolsToIncludedHeaders": false,
+                "databaseFilename": ""
+            },
+            "cStandard": "c11",
+            "cppStandard": "c++17"
+        }
+    ],
+    "version": 4
+}

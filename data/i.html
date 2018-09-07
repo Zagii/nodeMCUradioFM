@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html>
+  <head>
+<title>Podlewacz</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="css/w3.css">
+<link rel="stylesheet" href="css/a.css">
+<link rel="stylesheet" href="css/fontawesome-all.min.css">
+<script src="js/ws.js"></script>
+<script src="js/wsConn.js"></script>
+<script src="js/s.js"></script>
+
+
+
+<style>
+body, h1,h2,h3,h4,h5,h6 {font-family: "Montserrat", sans-serif}
+.w3-row-padding img {margin-bottom: 12px}
+/* Set the width of the sidebar to 120px */
+.w3-sidebar {width: 120px;background: #222;}
+/* Add a left margin to the "page content" that matches the width of the sidebar (120px) */
+#main {margin-left: 120px}
+/* Remove margins from "page content" on small screens */
+@media only screen and (max-width: 600px) {#main {margin-left: 0}}
+a:hover {
+    color:tan;
+}
+</style>
+
+</head>
+<body class="w3-black">
+
+<!-- Icon Bar (Sidebar - hidden on small screens) -->
+<nav class="w3-sidebar w3-bar-block w3-small w3-hide-small w3-center">
+  <!-- Avatar image in top left corner -->
+ <!-- <img src="/w3images/avatar_smoke.jpg" style="width:100%">-->
+  <i class="fa fa-plug w3-xlarge" style="color:darkred" id="plug"></i>  
+  <a href="#stat" class="w3-bar-item w3-button w3-padding-large w3-black">
+    <i class="fa fa-book w3-xxlarge"></i>
+    <p>Status</p>
+  </a>
+  <a href="#sekcje" class="w3-bar-item w3-button w3-padding-large w3-hover-black">
+    <i class="fa fa-user w3-xxlarge"></i>
+    <p>Sekcje</p>
+  </a>
+  <!--
+  <a href="progr.html" class="w3-bar-item w3-button w3-padding-large w3-hover-black">
+    <i class="fa fa-keyboard w3-xxlarge"></i>
+    <p>Programowanie</p>
+  </a>-->
+  <a href="p.html" class="w3-bar-item w3-button w3-padding-large w3-hover-black">
+    <i class="fa fa-cogs w3-xxlarge"></i>
+    <p>Konfiguracja</p>
+  </a>
+
+</nav>
+
+<!-- Navbar on small screens (Hidden on medium and large screens) -->
+<div class="w3-top w3-hide-large w3-hide-medium" id="myNavbar">
+  <div class="w3-bar w3-black w3-opacity w3-hover-opacity-off w3-center w3-small">
+    <a href="" class="w3-bar-item w3-large"><i class="fa fa-plug" style="color:darkred" id="plugm"></i> </a>
+    <a href="#stat" class="w3-bar-item w3-button" style="width:25% !important">Status</a>
+    <a href="#sekcje" class="w3-bar-item w3-button" style="width:25% !important">Sekcje</a>
+   <!-- <a href="progr.html" class="w3-bar-item w3-button" style="width:25% !important">Programowanie</a>-->
+    <a href="p.html" class="w3-bar-item w3-button" style="width:25% !important">Konfiguracja</a>
+  </div>
+</div>
+
+<!-- Page Content -->
+<div class="w3-padding-large" id="main">
+  <!-- Header/Home -->
+  <header class="w3-container w3-padding-32 w3-center w3-black" id="home">
+<h1 class="w3-jumbo"><span class="w3-hide-small">Aqua touch</span></h1><i>by KZG</i>
+    <p>Sterownik automatycznego nawadniania trawnika.</p>
+  <!--  <img src="/w3images/man_smoke.jpg" alt="boy" class="w3-image" width="992" height="1108">-->
+  </header>
+
+  <!-- About Section -->
+  <div class="w3-content w3-justify w3-text-grey w3-padding-64" id="stat">
+    <h2 class="w3-text-light-grey">Aktualny status systemu</h2>
+    <hr style="width:200px" class="w3-opacity">
+    <div class="w3-row w3-center w3-padding-16 w3-section w3-light-grey">
+            <div class="w3-quarter w3-section">
+                    <span class="w3-xlarge" id="dX">01-01-1900</span><br>
+                    Data
+            </div>
+            <div class="w3-quarter w3-section">
+              <span class="w3-xlarge" id="godz">00:00:00</span><br>
+              Godzina
+            </div>
+            <div class="w3-quarter w3-section">
+                    <span class="w3-xlarge" id="geo">Duchnice</span><br>
+                    Lokalizacja
+            </div>
+            <div class="w3-quarter w3-section">
+              <span class="w3-xlarge" id="temp">15.5 C</span><br>
+              Temperatura powietrza
+            </div>
+            <div class="w3-quarter w3-section">
+              <span class="w3-xlarge" id="cisn"> 1023,23 HPa</span><br>
+             Ciśnienie atmosferyczne
+            </div>
+            
+            <div class="w3-quarter w3-section">
+              <span class="w3-xlarge" id="deszcz"> 0/1</span><br>
+             Czujnik opadów
+            </div>
+            <div class="w3-quarter w3-section" onclick="trybSwitch()">
+                <span class="w3-xlarge" id="tryb">auto</span><br>
+				<i class="fas fa-toggle-on w3-xlarge" id="trSw"></i> 
+				Tryb pracy
+              </div>
+			  <div class="w3-quarter w3-section">
+				        
+			  <span class="w3-xlarge" id="pol">..init..</span><br>
+				Połączenie
+              </div>
+			  
+          </div>
+          <!--<div class="w3-row w3-justify w3-text-grey w3-padding-64" id="deb">
+            <input class="w3-input" style="width:90%" type="text" id="debjson3" value="{&quot;topic&quot;:&quot;LBL&quot;,&quot;msg&quot;:{&quot;id&quot;:1,&quot;lbl&quot;:&quot;txt&quot;}}"/>
+            <button type="submit" class="button button5" onclick="(function(){ W.send(document.getElementById('debjson3').value); })();">ok</button>
+          
+            <input class="w3-input" style="width:90%" type="text" id="debjson2" value="{&quot;topic&quot;:&quot;INF&quot;,&quot;msg&quot;:{&quot;TRYB&quot;:&quot;m&quot;,&quot;GEO&quot;:&quot;a&quot;}}"/>
+            <button type="submit" class="button button5" onclick="(function(){ W.send(document.getElementById('debjson2').value); })();">ok</button>
+          <input class="w3-input" style="width:90%" type="text" id="debjson" 
+          value="{&quot;GEO&quot;:&quot;a123&quot;,&quot;TEMP&quot;:124.4,&quot;TRYB&quot;:1,&quot;CZAS&quot;:123,&quot;CISN&quot;:333,&quot;DESZCZ&quot;:0,&quot;SEKCJE&quot;:3}"/>
+          <button type="submit" class="button button5" onclick="(function(){ W.send(document.getElementById('debjson').value); })();">ok</button>
+        </div>-->
+        
+    <div class="w3-content w3-justify w3-text-grey w3-padding-64" id="sekcje">
+        <h2 class="w3-text-light-grey">Stan sekcji</h2>
+        <hr style="width:200px" class="w3-opacity">
+        <div class="w3-row w3-center w3-padding-16 w3-section w3-light-grey" id="sDiv">
+      </div>
+      <div class="w3-content w3-justify w3-text-grey w3-padding-64" id="deb">
+        <p id="SYSTIME"></p>
+      </div>
+         
+      
+
+      

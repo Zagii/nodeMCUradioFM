@@ -1,0 +1,14 @@
+{"PROG":[
+    {"id":0,"dzienTyg":1,"tStr":"04:00:00","ms":14400,"okresS":600,"coIle":1,"sekcja":1,"aktywny":1},
+    {"id":1,"dzienTyg":1,"tStr":"04:10:05","ms":15005,"okresS":600,"coIle":1,"sekcja":2,"aktywny":1},
+    {"id":2,"dzienTyg":1,"tStr":"04:20:10","ms":15610,"okresS":600,"coIle":1,"sekcja":3,"aktywny":1},
+    {"id":3,"dzienTyg":1,"tStr":"04:30:15","ms":16215,"okresS":600,"coIle":1,"sekcja":4,"aktywny":1},
+    {"id":4,"dzienTyg":1,"tStr":"04:40:20","ms":16820,"okresS":600,"coIle":1,"sekcja":5,"aktywny":1},
+    {"id":5,"dzienTyg":1,"tStr":"04:50:25","ms":17425,"okresS":600,"coIle":2,"sekcja":6,"aktywny":1},
+    {"id":6,"dzienTyg":1,"tStr":"22:0:0","ms":79200,"okresS":600,"coIle":1,"sekcja":1,"aktywny":1},
+    {"id":7,"dzienTyg":1,"tStr":"22:10:5","ms":79805,"okresS":600,"coIle":1,"sekcja":2,"aktywny":1},
+    {"id":8,"dzienTyg":1,"tStr":"22:20:10","ms":80410,"okresS":600,"coIle":1,"sekcja":3,"aktywny":1},
+    {"id":9,"dzienTyg":1,"tStr":"22:30:15","ms":81015,"okresS":600,"coIle":1,"sekcja":4,"aktywny":1},
+    {"id":10,"dzienTyg":1,"tStr":"22:40:20","ms":81620,"okresS":600,"coIle":1,"sekcja":5,"aktywny":1}
+    ]
+}
