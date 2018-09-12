@@ -18,7 +18,6 @@
 #include <ESP8266WebServer.h>
 #include <ESP8266mDNS.h>
 
-#include <pcf8574_esp.h>
 #include <ArduinoJson.h>
 #include <Time.h>
 #include <TimeLib.h>
@@ -26,12 +25,7 @@
 #include "CWifi.h"
 #include "Config.h"
 #include "CWebSerwer.h"
-
-
-
-////////////pcf
-PCF857x pcf8574(0b00111000, &Wire);
-////////////////
+#include "radioFM.h"
 
 CWifi wifi;
 PubSubClient *mqtt;
@@ -46,34 +40,23 @@ char tmpMsg[MAX_MSG_LENGHT];
 ////////////// sprawdzic ntp
 ////////// https://github.com/arduino-libraries/NTPClient
 
+CradioFM radioFM;
+
+
 unsigned long czasLokalnyMillis=0;
 unsigned long czasLokalny=0;
 
 unsigned long sLEDmillis=0;
 
-byte stanSekcji=0;
+
 bool czekaNaPublikacjeStanuMQTT=false;
 bool czekaNaPublikacjeStanuWS=false;
-bool czekaNaPublikacjeStanuHW=false;
-
-bool czekaNaPublikacjeLBL=false;
-bool czekaNaPublikacjePROG=false;
-bool czekaNaPublikacjeKONF=false;
-bool czekaNaPublikacjeSTAT=false;
 
 uint8_t publicID=0;
-unsigned long publicMillis=0;
+unsigned long Millis=0;
 
-/////////////// czujnik wilgoci ///////////////////////
-int stanCzujnikaWilgoci;             // the current reading from the input pin
-int lastButtonState = LOW;   // the previous reading from the input pin
-unsigned long lastDebounceTime = 0;  // the last time the output pin was toggled
-unsigned long debounceDelay = 50;    // the debounce time; increase if the output flickers
-////////////////////// czujnik wilgoci koniec //////////
 
 void(* resetFunc) (void) = 0; //declare reset function @ address 0
-
-
 
 void callback(char* topic, byte* payload, unsigned int length) 
 {
@@ -170,15 +153,10 @@ void setup()
   pinMode(LED, OUTPUT);     // Initialize the BUILTIN_LED pin as an output
   digitalWrite(LED,ON);
  
-  //Setup PCF8574
-  Wire.pins(PIN_SDA, PIN_SCL);//SDA - D1, SCL - D2
-  Wire.begin();
-  
-  pinMode(PIN_WILGOC, INPUT_PULLUP); //czujnik wilgoci
+  //Wire.pins(PIN_SDA, PIN_SCL);//SDA - D1, SCL - D2
+  //Wire.begin();
 
-  pcf8574.begin( 0x00 ); //8 pin output
- // pcf8574.resetInterruptPin();
-  wylaczWszystko();
+  radioFM.begin();
   //
 
 //////////////// wifi i mqtt init ///////////
@@ -189,38 +167,6 @@ void setup()
 
 conf.begin();
 conf.setTryb(TRYB_AUTO);
-//delay(1000);
-DPRINTLN("Programy");
-/*Program pp;
-conf.setProg(pp,1, 1, 1970, 7, 0,0,8*60,1,1); 
-conf.addProg(pp);
-conf.setProg(pp,1, 1, 1970, 7, 8,10,8*60,1,2);
-conf.addProg(pp);
-conf.setProg(pp,1, 1, 1970, 7, 16,20,8*60,1,3);
-conf.addProg(pp);
-conf.setProg(pp,1, 1, 1970, 7, 24,30,8*60,1,4);
-conf.addProg(pp);
-conf.setProg(pp,1, 1, 1970, 7, 32,40,8*60,1,6);
-conf.addProg(pp);
-conf.setProg(pp,1, 1, 1970, 7, 40,50,5*60,1,5);
-conf.addProg(pp);
-conf.setProg(pp,1, 1, 1970, 19, 0,0,8*60,1,1); 
-conf.addProg(pp);
-conf.setProg(pp,1, 1, 1970, 19, 8,10,8*60,1,2);
-conf.addProg(pp);
-conf.setProg(pp,1, 1, 1970, 19, 16,20,8*60,1,3);
-conf.addProg(pp);
-conf.setProg(pp,1, 1, 1970, 19, 24,30,8*60,1,4);
-conf.addProg(pp);
-conf.setProg(pp,1, 1, 1970, 19, 32,40,8*60,1,6);
-conf.addProg(pp);
-conf.setProg(pp,1, 1, 1970, 19, 40,50,5*60,1,5);
-conf.addProg(pp);
-conf.publishAllProg();
-
-conf.saveConfig();
-*/
-conf.publishAllProg();
 
 //////////////// odczyt WiFi
 String wifiJson=conf.loadJsonStr(PLIK_WIFI);
@@ -235,150 +181,33 @@ WebSocketsServer * webSocket=web.getWebSocket();
 webSocket->onEvent(wse);
 }
 
-void wylaczWszystko()
+void parsujRozkaz(char *topic, char *msg)
 {
-  zmienStanSekcjiAll(0);
-     czekaNaPublikacjeStanuMQTT=true;
-   czekaNaPublikacjeStanuWS=true;
-   czekaNaPublikacjeStanuHW=true;
-}
-void zmienStanSekcjiAll(uint8_t stan)
-{
-  if(stanSekcji==stan) return;
-   stanSekcji=stan;
-   czekaNaPublikacjeStanuMQTT=true;
-   czekaNaPublikacjeStanuWS=true;
-   czekaNaPublikacjeStanuHW=true;
-}
-void zmienStanSekcji(uint8_t sekcjanr,uint8_t stan)
-{
-  DPRINT("zmienStanSekcji nr=");DPRINT(sekcjanr);DPRINT(", stan=");DPRINT(stan);DPRINT(", stanSekcji=");DPRINTLN(stanSekcji);
-  uint8_t x=bitRead(stanSekcji,sekcjanr);
-  if(x==stan)return;
-  if(stan==1)
-  {
-    DPRINT("ON");
-    bitSet(stanSekcji,sekcjanr);
-  }else
-  {
-    DPRINT("OFF");
-    bitClear(stanSekcji,sekcjanr);
-  }
-   DPRINT("zmienStanSekcji koniec nr=");DPRINT(sekcjanr);DPRINT(", stan=");DPRINT(stan);DPRINT(", stanSekcji=");DPRINTLN(stanSekcji);
-  //web.zmienStanSekcji(stanSekcji);
-  czekaNaPublikacjeStanuMQTT=true;
-  czekaNaPublikacjeStanuWS=true;
-  czekaNaPublikacjeStanuHW=true;
-}
-void publikujStanSekcjiMQTT()
-{
-   if(wifi.getConStat()!=CONN_STAT_WIFIMQTT_OK)return;
-   
-   byte b = stanSekcji;//pcf8574.read8();
-   DPRINT("publikujStanSekcjiMQTT ");DPRINT(b);DPRINT(", ");DPRINTLN(stanSekcji);
-   for(int i=SEKCJA_MIN;i<=SEKCJA_MAX;i++)
-   {
-      //if(b&(1<<i))
-      if(bitRead(b,i))
-      {
-          sprintf(tmpTopic,"%s/SEKCJA/%d/",wifi.getOutTopic(),i);
-          strcpy(tmpMsg,"1");
-      }else
-      {
-          sprintf(tmpTopic,"%s/SEKCJA/%d/",wifi.getOutTopic(),i);
-          strcpy(tmpMsg,"0");
-      }
-      wifi.RSpisz(tmpTopic,tmpMsg);
-   }
-   DPRINT("######### ZMIANA STANU WYJSC ############ ");DPRINTLN(stanSekcji,BIN);
-}
-
- void parsujRozkaz(char *topic, char *msg)
- {
   DPRINT("parsujRozkaz topic=");DPRINT(topic);DPRINT(", msg=");DPRINTLN(msg);
    char *ind=NULL;
-   ///////////////// SEKCJA  //////////////////////////
-   ind=strstr(topic,"SEKCJA/");
-   if(ind!=NULL)
-   {
-    DPRINTLN(ind);
-     ind+=strlen("SEKCJA/"); //bo jeszcze nr sekcji
-    DPRINTLN(ind);
-     if(isIntChars(ind))
-     {
-        if(isIntChars(msg))
-        {
-          if(msg[0]=='0')
-          {
-            zmienStanSekcji(atoi(ind),0);
-          }else
-          {
-            zmienStanSekcji(atoi(ind),1);
-          }
-        }else
-        {
-          DPRINT("ERR dla topic SEKCJAx msg ");DPRINT(msg);DPRINT(" nie int, linia:");DPRINTLN(__LINE__);
-        }
-     }else
-     {
-         DPRINT("ERR topic ");DPRINT(topic);DPRINT(" nie int, linia:");DPRINTLN(__LINE__);
-     }
-     return;
-    }
+   
     //////////////////////////////////////
-    ind=strstr(topic,"TRYB");
+    ind=strstr(topic,"CMD");
     if(ind!=NULL)
     {
-       if(msg[0]=='a')
+      char c=msg[0];
+       if(c=='+'||c=='-'||c=='>'||c=='<'||c=='.'||c==','||c=='f'||c=='i'||c=='s'||c=='b'||c=='u')
        {
-          conf.setTryb(TRYB_AUTO);  
+         uint16_t value=0;
+         uint8_t ic=1;
+         char v=msg[ic];
+         while(v!='\0'&&ic<6) //10110
+         {
+            value = (value * 10) + (v - '0');
+            ic++;
+            v=msg[ic];
+         }
+         radioFM.runSerialCommand(c,value);
        }
-       if(msg[0]=='m')
-       {
-            conf.setTryb(TRYB_MANUAL);
-       }
+       
         return;
     }
-    ind=strstr(topic,"CZAS");
-    if(ind!=NULL)
-    {
-      czasLokalny=atoi(msg);
-      return;
-    }
-    ind=strstr(topic,"DEL_PROG");
-    if(ind!=NULL)
-    {
-      uint16_t delID=atoi(msg);
-      conf.delProg(delID);
-      conf.saveProgs();  
-      czekaNaPublikacjePROG=true;
-    }
-    ind=strstr(topic,"GET");
-    if(ind!=NULL)
-    {
-       ind=strstr(msg,"SLBL");
-       if(ind!=NULL)
-       {
-          czekaNaPublikacjeLBL=true;
-       }
-       ind=strstr(msg,"PROG");
-       if(ind!=NULL)
-       {
-        czekaNaPublikacjePROG=true;
-       }
-       ind=strstr(msg,"KONF");
-       if(ind!=NULL)
-       {
-        czekaNaPublikacjeKONF=true;
-       }
-       ind=strstr(msg,"STAT");
-       if(ind!=NULL)
-       {
-        czekaNaPublikacjeSTAT=true;
-       }
       
-       return;
-    }
     //////////////////////// komendy ktore maja jsona jako msg /////////////////////////
     DynamicJsonBuffer jsonBuffer;
     JsonObject& json = jsonBuffer.parseObject(msg);
@@ -438,63 +267,7 @@ void publikujStanSekcjiMQTT()
       conf.saveConfigStr(PLIK_MQTT,jsS.c_str());
       czekaNaPublikacjeKONF=true;
     }
-    ind=strstr(topic,"LBL");
-    if(ind!=NULL)
-    {
-      uint8_t id=json["id"];
-     
-      String lbl=json["lbl"];
-      conf.setSekcjaLbl(id,lbl);
-      String str="{\"LBL\":[";
-      for(int i=0;i<8;i++)
-      {
-        str+="{\"id\":"+String(i)+",\"lbl\":\""+conf.getSekcjaLbl(i)+"\"}";
-        if(i<7)str+=",";
-      }
-      str+="]}";
-      conf.saveConfigStr(PLIK_LBL,str.c_str());
-      czekaNaPublikacjeLBL=true;
-    }
     
-    ind=strstr(topic,"PROG");
-    if(ind!=NULL)
-    {
-       if(json.containsKey("id"))
-      {
-        uint16_t i=json["id"];
-        Program a;
-        conf.getProg(a,i);
-        if(json.containsKey("ms")&&json.containsKey("dzienTyg"))
-        {
-          /////////// tu przeba przeliczyc
-          //a.dataOdKiedy=json["dt"];
-          a.dzienTyg=json["dzienTyg"];
-          a.godzinaStartu=json["ms"];
-        }
-        if(json.containsKey("tStr"))a.tStr=String(json["tStr"].as<char*>());
-        if(json.containsKey("okresS"))a.czas_trwania_s=json["okresS"];
-        if(json.containsKey("sekcja"))a.sekcja=json["sekcja"];
-        if(json.containsKey("coIle"))a.co_ile_dni=json["coIle"];
-        if(json.containsKey("aktywny"))a.aktywny=json["aktywny"];
-        ///////////////
-        //set progr tab
-        conf.changeProg(a,i);
-        conf.saveProgs();
-        czekaNaPublikacjePROG=true;
-      }else
-      {
-        DPRINTLN("Nowy program");
-        if(json.containsKey("dzienTyg")&&json.containsKey("ms")&&json.containsKey("okresS")&&json.containsKey("sekcja")&&json.containsKey("coIle")&&json.containsKey("aktywny"))
-        {
-          Program a;
-          conf.setProg(a,json["dzienTyg"],json["tStr"],json["ms"],json["okresS"],json["coIle"],json["sekcja"],json["aktywny"]);
-          conf.addProg(a);
-          conf.saveProgs();
-          czekaNaPublikacjePROG=true;
-        }else
-          {DPRINTLN("Za mało parametrów by dodać program.");}
-      }
-    }
  }
 
 unsigned long d=0;
@@ -503,25 +276,16 @@ String millisTimeStr;
 void loop()
 {
 
-  /////////////// czujnik wilgoci //////////////////
-   int reading = digitalRead(PIN_WILGOC);
-    if (reading != lastButtonState) {
-    lastDebounceTime = millis();
-  }
-
-  if ((millis() - lastDebounceTime) > debounceDelay) {
-    if (reading != stanCzujnikaWilgoci) {
-      stanCzujnikaWilgoci = reading;
-    }
-  }
-  lastButtonState = reading;
-/////////////// czujnik wilgoci koniec //////////////////   
-  String infoStr;
+  
    if(millis()-czasLokalnyMillis>1000)
   {
     czasLokalnyMillis=millis();
     czasLokalny++;
     millisTimeStr=String(wifi.TimeToString(millis()/1000));
+  }
+  if(radioFM.loop())
+  {
+     String infoStr="";
     //// przygotowanie ogólnego statusu
     DynamicJsonBuffer jsonBuffer;
     JsonObject& root = jsonBuffer.createObject();
@@ -537,19 +301,17 @@ void loop()
     {
       root["CZAS"]= wifi.getEpochTime();
     }
-    root["SEKCJE"]=stanSekcji;
-    root["TRYB"]=String(conf.getTryb());
-    root["GEO"]="Duchnice";
-    root["TEMP"]=20.1f;
-    root["CISN"]=1023.34f;
-    root["DESZCZ"]=stanCzujnikaWilgoci;
-    root["SYSTIME"]=millisTimeStr;
+    root["STATUS"]=radioFM.getStatusStr();
     root.printTo(infoStr); 
     char tmpTopic[MAX_TOPIC_LENGHT];
     sprintf(tmpTopic,"%s/INFO/",wifi.getOutTopic());
     
     wifi.RSpisz(String(tmpTopic),infoStr,true);
+    String js=String("{\"INFO\":")+infoStr+"}";
+    DPRINTLN(js);
+    web.sendWebSocket(js.c_str());
   ////////////
+  }
   }
  delay(5);
   wifi.loop();
@@ -567,26 +329,10 @@ void loop()
    {
      sLEDmillis=millis();
     // DPRINT( "[");DPRINT(wifi.getTimeString());DPRINT("] ");DPRINTLN(wifi.getEpochTime());
-     if(conf.getTryb()==TRYB_AUTO) // test czy programator każe wlączyć
-     {
-      uint8_t sekcjaProg=conf.wlaczoneSekcje(wifi.getEpochTime());
-        Serial.println(sekcjaProg,BIN);
-      zmienStanSekcjiAll(sekcjaProg);
-     }
-    if(stanCzujnikaWilgoci==LOW);
-    {
-      //DPRINTLN("WYLACZANIE Z POWODU DESZCZU !!!!");
-   //   zmienStanSekcjiAll(0);
-    }
+    
    }
    /////////////////// obsluga hardware //////////////////////
-    if(czekaNaPublikacjeStanuHW)
-    {
-      
-        pcf8574.write8(~stanSekcji);
-        czekaNaPublikacjeStanuHW=false;
-        delay(5);
-    }
+   
     /////////// publikowanie ///////////////
     if(czekaNaPublikacjeStanuMQTT)
     {
@@ -601,48 +347,8 @@ void loop()
         delay(10);
     }
     
-   if(czekaNaPublikacjeLBL)
-   {
-      String str;
-      for(int i=1;i<7;i++)
-      {
-        str="{\"id\":"+String(i)+",\"lbl\":\""+conf.getSekcjaLbl(i)+"\"}";
-        char tmpTopic[MAX_TOPIC_LENGHT];
-        sprintf(tmpTopic,"%s/LBL/",wifi.getOutTopic());
-        wifi.RSpisz((const char*)tmpTopic,(char*)str.c_str());
-        String js=String("{\"LBL\":")+str+"}";
-        DPRINTLN(js);
-         web.sendWebSocket(js.c_str());
-      }
-      delay(10);      
-      czekaNaPublikacjeLBL=false;
-   }
-   if(czekaNaPublikacjePROG)
-   {
-    DPRINTLN("PublikacjaPROG");
-     char tmpTopic[MAX_TOPIC_LENGHT];
-     sprintf(tmpTopic,"%s/INIT_PROGS/",wifi.getOutTopic());
-      DPRINTLN(tmpTopic);
-      String jjs=String(conf.getProgIle());
-      DPRINTLN(jjs);
-     wifi.RSpisz(String(tmpTopic),jjs);
-     jjs=String("{\"INIT_PROGS\":")+String(conf.getProgIle())+"}";
-     DPRINTLN(jjs);
-     web.sendWebSocket(jjs.c_str());
-      delay(5);
-     sprintf(tmpTopic,"%s/PROG/",wifi.getOutTopic());
-    for(uint16_t i=0;i<conf.getProgIle();i++)
-    {
-      String str=conf.publishTabProgJsonStr(i);
-      wifi.RSpisz((const char*)tmpTopic,(char*)str.c_str());
-      String js=String("{\"PROG\":")+str+"}";
-      DPRINTLN(js);
-      web.sendWebSocket(js.c_str());
-      delay(1);
-    }
-    czekaNaPublikacjePROG=false;
-    delay(10);
-   }
+   
+   
    if(czekaNaPublikacjeKONF)
    {
     //ntp

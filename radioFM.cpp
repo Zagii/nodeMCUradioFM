@@ -218,6 +218,7 @@ void CRadio::setStatusStr()
     statusStr="{'freq':"+ff+", 'vol':"+v+",'rdsName':'"+ rdsLastName+
                 "','rdsText':'"+rdsLastText+
                 "','rdsTime':'"+rdsLastTime+"'}";
+  czekaStatus=true;
 }
 void CradioFM::testRDS()
 {
@@ -240,7 +241,7 @@ void CradioFM::testRDS()
   }
   if(ret)
   {
-    setStatusStr();
+    setStatusStr(); 
   }
   return ret;
 }

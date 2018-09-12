@@ -89,14 +89,17 @@ class CradioFM
      // int newPos;
     String statusStr="";
     bool testRDS();
+    bool czekaStatus=false;
 
     public:
+    CradioFM(){};
     void DisplayFrequency(RADIO_FREQ f);
     void runSerialCommand(char cmd, int16_t value);
     void begin();
     bool loop(); //zwraca true jesli zmienil sie status
     void checkSerial();
     void setStatusStr();
+    void clearStatusFlag(){czekaStatus=false;}
     String getStatusStr(){return statusStr;}
 };
 #endif
